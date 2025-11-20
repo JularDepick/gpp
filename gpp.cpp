@@ -5,6 +5,7 @@
 using namespace std;
 
 string ftime(int t) {
+	//时间格式化
 	int minutes=t/60;
 	int seconds=t%60;
 	if(t<0 || minutes>99) {
@@ -28,34 +29,82 @@ string ftime(int t) {
 	}
 	return fstr;
 }
-
-//更新计划: 逐参数判断完前置选项再进行文件路径列表判断,允许控制台使用自定义参数编译,允许配置自定义编译器路径 
+ 
 int main(int argc,char* argv[]) {
+	//参数存在性判断 
 	if(argc<=1) {
-		cout<<"\n>> 空参数不可取!"<<endl;
+		cout<<">> 空参数不可取!"<<endl; 
 		return 0;
 	}
-	int begini=1;
-	
-	bool endly_pause=1;
-	if(string(argv[1])=="-a") {
-		begini=2;
-		endly_pause=0;
+	string arg1=argv[1];
+	if(arg1=="/cd") {
+		//切换自定义编译器路径
 		if(argc<=2) {
-			cout<<"\n>> 参数缺失!"<<endl;
-			return 0;
-		} 
+			//切回默认路径 
+			ofstream inifout("./gpp.ini");
+			inifout<<"";
+			cout<<">> 已切换编译器路径为 g++.exe"<<endl;
+		} else {
+			ifstream gpp_exe(argv[2],ios::binary);
+			if(gpp_exe.good()) {
+				ofstream inifout("./gpp.ini");
+				inifout<<argv[2];
+				cout<<">> 已切换编译器路径为 "<<argv[2]<<endl;
+			} else {
+				cout<<">> 切换失败:无效的路径!"<<endl;
+			}
+		}
+		return 0; 
+	}
+	if(arg1=="/cfg") {
+		//切换自定义编译参数 
+		if(argc<=2) {
+			//切回默认编译参数 
+			ofstream cfgfout("./gpp.cfg");
+			cfgfout<<"-O2 -std=c++17";
+			cout<<">> 已切换编译参数为 -O2 -std=c++17"<<endl;
+		} else {
+			string args="";
+			for(int i=2;i<argc;i++) {
+				args+=(string(argv[i])+" ");
+			}
+			ofstream cfgfout("./gpp.cfg");
+			cfgfout<<args;
+			cout<<">> 已切换编译参数为 "<<args<<endl;
+		}
+		return 0; 
+	}
+	bool endly_pause=1;
+	int begini=1;
+	if(arg1=="/a") {
+		//取消结束确认 
+		endly_pause=0;
+		begini=2;
 	}
 	
-	string gpp_args="";
+	//读取自定义编译器路径
+	string gpp_root="g++.exe";
 	ifstream inifin("./gpp.ini");
 	if(inifin.good()) {
-		getline(inifin,gpp_args);
+		getline(inifin,gpp_root);
+		ifstream gpp_exe(gpp_root.data(),ios::binary);
+		if(!gpp_exe.good()) {
+			cout<<">> 找不到编译器路径 "<<gpp_root<<" ,默认使用 g++.exe"<<endl;
+			gpp_root="g++.exe";
+		} else if(gpp_root.empty()) {
+			gpp_root="g++.exe";
+		}
+	}
+	//读取自定义编译参数
+	string gpp_args="";
+	ifstream cfgfin("./gpp.cfg");
+	if(cfgfin.good()) {
+		getline(cfgfin,gpp_args);
+		if(gpp_args.empty()) {
+			gpp_args="-O2 -std=c++17";
+		}
 	} else {
-		ofstream inifout("./gpp.ini");
 		gpp_args="-O2 -std=c++17";
-		inifout<<gpp_args;
-		printf(">> 配置文件 gpp.ini 不存在,已自动创建并使用默认参数!\n");
 	}
 	
 	for(int i=begini;i<argc;i++) {
@@ -73,12 +122,12 @@ int main(int argc,char* argv[]) {
 				continue;
 			}
 		}
-		string cmdstr=("g++.exe "+codefile);
+		string cmdstr=(gpp_root+" "+codefile);
 		while(codefile.back()!='\\' && codefile.back()!='/') {
 			if(codefile.back()=='.') {
 				codefile+="exe";
 				cmdstr+=(" -o "+codefile+" "+gpp_args);
-				cout<<">> 正在尝试调用 g++.exe 编译 "<<argv[i]<<" ......"<<endl<<endl;
+				cout<<">> 正在尝试调用 "<<gpp_root<<" 编译 "<<argv[i]<<" ......"<<endl<<endl;
 				system(cmdstr.data());
 				cout<<endl;
 				break;
@@ -87,7 +136,7 @@ int main(int argc,char* argv[]) {
 		}
 	}
 	
-	if(endly_pause) {
+	if(endly_pause && begini<argc) {
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),0x04);
 		cout<<">> 操作结束,等待十分钟或按下回车键退出本次操作,按ESC键取消倒计时.....\n"<<endl;
 		auto start_=chrono::system_clock::now();
