@@ -61,8 +61,8 @@ int main(int argc,char* argv[]) {
 		if(argc<=2) {
 			//切回默认编译参数 
 			ofstream cfgfout("./gpp.cfg");
-			cfgfout<<"-O2 -std=c++17";
-			cout<<">> 已切换编译参数为 -O2 -std=c++17"<<endl;
+			cfgfout<<"-O2 -std=c++17 -s -DNDEBUG";
+			cout<<">> 已切换编译参数为 -O2 -std=c++17 -s -DNDEBUG"<<endl;
 		} else {
 			string args="";
 			for(int i=2;i<argc;i++) {
