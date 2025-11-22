@@ -29,18 +29,18 @@ string ftime(int t) {
 	}
 	return fstr;
 }
- 
+
 int main(int argc,char* argv[]) {
-	//参数存在性判断 
+	//参数存在性判断
 	if(argc<=1) {
-		cout<<">> 空参数不可取!"<<endl; 
+		cout<<">> 空参数不可取!"<<endl;
 		return 0;
 	}
 	string arg1=argv[1];
 	if(arg1=="/cd") {
 		//切换自定义编译器路径
 		if(argc<=2) {
-			//切回默认路径 
+			//切回默认路径
 			ofstream inifout("./gpp.ini");
 			inifout<<"";
 			cout<<">> 已切换编译器路径为 g++.exe"<<endl;
@@ -54,12 +54,12 @@ int main(int argc,char* argv[]) {
 				cout<<">> 切换失败:无效的路径!"<<endl;
 			}
 		}
-		return 0; 
+		return 0;
 	}
 	if(arg1=="/cfg") {
-		//切换自定义编译参数 
+		//切换自定义编译参数
 		if(argc<=2) {
-			//切回默认编译参数 
+			//切回默认编译参数
 			ofstream cfgfout("./gpp.cfg");
 			cfgfout<<"-O2 -std=c++17 -s -DNDEBUG";
 			cout<<">> 已切换编译参数为 -O2 -std=c++17 -s -DNDEBUG"<<endl;
@@ -72,27 +72,23 @@ int main(int argc,char* argv[]) {
 			cfgfout<<args;
 			cout<<">> 已切换编译参数为 "<<args<<endl;
 		}
-		return 0; 
+		return 0;
 	}
-	bool endly_pause=1;
-	int begini=1;
-	if(arg1=="/a") {
-		//取消结束确认 
-		endly_pause=0;
-		begini=2;
-	}
-	
+	bool endly_pause=!(string(argv[0])=="gpp" || string(argv[0])=="gpp.exe");
+
 	//读取自定义编译器路径
 	string gpp_root="g++.exe";
 	ifstream inifin("./gpp.ini");
 	if(inifin.good()) {
 		getline(inifin,gpp_root);
-		ifstream gpp_exe(gpp_root.data(),ios::binary);
-		if(!gpp_exe.good()) {
-			cout<<">> 找不到编译器路径 "<<gpp_root<<" ,默认使用 g++.exe"<<endl;
+		if(gpp_root.empty()) {
 			gpp_root="g++.exe";
-		} else if(gpp_root.empty()) {
-			gpp_root="g++.exe";
+		} else {
+			ifstream gpp_exe(gpp_root.data(),ios::binary);
+			if(!gpp_exe.good()) {
+				cout<<">> 找不到编译器路径 "<<gpp_root<<" ,默认使用 g++.exe"<<endl;
+				gpp_root="g++.exe";
+			}
 		}
 	}
 	//读取自定义编译参数
@@ -101,13 +97,13 @@ int main(int argc,char* argv[]) {
 	if(cfgfin.good()) {
 		getline(cfgfin,gpp_args);
 		if(gpp_args.empty()) {
-			gpp_args="-O2 -std=c++17";
+			gpp_args="-O2 -std=c++17 -s -DNDEBUG";
 		}
 	} else {
-		gpp_args="-O2 -std=c++17";
+		gpp_args="-O2 -std=c++17 -s -DNDEBUG";
 	}
-	
-	for(int i=begini;i<argc;i++) {
+
+	for(int i=1;i<argc;i++) {
 		string codefile=argv[i];
 		ifstream codefin(codefile.data());
 		if(!codefin.good()) {
@@ -119,6 +115,9 @@ int main(int argc,char* argv[]) {
 				codefile=trypath;
 			} else {
 				cout<<">> 文件 "<<codefile<<" 不存在!\n"<<endl;
+				if(argc<=2) {
+					return 0;
+				}
 				continue;
 			}
 		}
@@ -135,8 +134,8 @@ int main(int argc,char* argv[]) {
 			codefile.pop_back();
 		}
 	}
-	
-	if(endly_pause && begini<argc) {
+
+	if(endly_pause) {
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),0x04);
 		cout<<">> 操作结束,等待十分钟或按下回车键退出本次操作,按ESC键取消倒计时.....\n"<<endl;
 		auto start_=chrono::system_clock::now();
@@ -174,6 +173,6 @@ int main(int argc,char* argv[]) {
 		}
 	}
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),0x07);
-	
+
 	return 0;
 }
